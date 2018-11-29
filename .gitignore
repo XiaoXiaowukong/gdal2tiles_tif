@@ -1,2 +1,5 @@
 dist/
 setup.py
+localTest.py
+.idea/
+
