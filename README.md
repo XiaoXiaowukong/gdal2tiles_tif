@@ -12,14 +12,11 @@ python gdal2tiles_tif.py -s EPSG:4326 -p mercator -z '0-3' /Volumes/pioneer/gdal
 
 ```
 ##说明
-```
--s :空间参考方式
--p :投影方式
--z :层级
-dir: 输入文件（tif）
-dis：输出文件
-
-```
+* 1.-s :空间参考方式
+* 2.-p :投影方式
+* 3.-z :层级
+* 4.dir: 输入文件（tif）
+* 5.dis：输出文件
 
 ##示例
 ```
