@@ -750,6 +750,5 @@ if __name__ == '__main__':
     argv = gdal.GeneralCmdLineProcessor(sys.argv)
     if argv:
         gdal2tiles = GDAL2Tiles(argv[1:])
-        print "gdal2tiles.options: \n", gdal2tiles.options
         gdal2tiles.process()
     print "end time ", time.time() - startTime
