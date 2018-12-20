@@ -334,6 +334,7 @@ class GDAL2Tiles(object):
         if self.input:
             self.in_ds = gdal.Open(self.input, gdal.GA_ReadOnly)
             self.proj = self.in_ds.GetProjection()
+            self.dataType = self.in_ds.ReadAsArray().dtype.name
         else:
             raise Exception('No input file was specified')
         if not self.in_ds:
@@ -353,7 +354,7 @@ class GDAL2Tiles(object):
             if self.in_ds.GetRasterBand(i).GetNoDataValue() != None:
                 self.in_nodata.append(self.in_ds.GetRasterBand(i).GetNoDataValue())
         # Spatial Reference System of the input raster
-
+        print self.in_nodata
         self.in_srs = None
         if self.options.s_srs:
             self.in_srs = osr.SpatialReference()
@@ -524,16 +525,33 @@ class GDAL2Tiles(object):
                         wysize,
                         band_list=[1],
                     )
-
-                    mydata = np.asarray(array("f", data))
+                    if (self.dataType == "float64"):
+                        mydata = np.asarray(array("d", data))
+                        self.gdaldataType = gdal.GDT_Float64
+                    elif (self.dataType == "float32"):
+                        mydata = np.asarray(array("f", data))
+                        self.gdaldataType = gdal.GDT_Float32
+                    if (self.options.exportNodata):
+                        self.fill_value = self.options.exportNodata
+                    else:
+                        if (self.in_nodata.__len__() == 0):
+                            self.fill_value = self.options.exportNodata
+                            pass
+                        else:
+                            self.fill_value = self.in_nodata[0]
+                            mydata[mydata == self.in_nodata[0]] = self.fill_value
+                    print self.fill_value
                     newMydata = np.reshape(mydata, (wysize, wxsize))
+                    print np.nanmax(newMydata)
+                    print np.min(newMydata)
                     driver = gdal.GetDriverByName("GTiff");  # 数据类型必须有，因为要计算需要多大内存空间
-                    dataset = driver.Create(tilefilename, querysize, querysize, 1, gdal.GDT_Float32)
-                    self.fill_value = np.finfo(np.float32).min
-                    noData = np.full(shape=(querysize, querysize), fill_value=self.fill_value)
-                    dataset.GetRasterBand(1).WriteArray(noData)  # 写入数组数据
+                    dataset = driver.Create(tilefilename, querysize, querysize, 1, self.gdaldataType)
+                    if (self.fill_value != None):
+                        noData = np.full(shape=(querysize, querysize), fill_value=self.fill_value)
+                        dataset.GetRasterBand(1).WriteArray(noData)  # 写入数组数据
+                        dataset.GetRasterBand(1).SetNoDataValue(np.double(self.fill_value))
+
                     dataset.GetRasterBand(1).WriteArray(newMydata, wx, wy)  # 写入数组数据
-                    dataset.GetRasterBand(1).SetNoDataValue(np.double(self.fill_value))
                     (minLat, minLon, maxLat, maxLon) = self.mercator.TileLatLonBounds(tx, ty, tz)
 
                     geotrans = (minLon, (maxLon - minLon) / querysize, 0.0, maxLat, 0.0, -(maxLat - minLat) / querysize)
@@ -672,6 +690,10 @@ class GDAL2Tiles(object):
         p.add_option('-v', '--verbose', action='store_true',
                      dest='verbose',
                      help='Print status messages to stdout')
+        p.add_option('--export_nodata',
+                     dest="exportNodata",
+                     help="export file set nodata"
+                     )
 
         # KML options
 
@@ -735,6 +757,7 @@ class GDAL2Tiles(object):
             resume=False,
             googlekey='INSERT_YOUR_KEY_HERE',
             bingkey='INSERT_YOUR_KEY_HERE',
+            exportNodata=None
         )
 
         self.parser = p
