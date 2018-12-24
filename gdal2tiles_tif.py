@@ -604,8 +604,7 @@ class GDAL2Tiles(object):
 
         return ((rx, ry, rxsize, rysize), (wx, wy, wxsize, wysize))
 
-        # -------------------------------------------------------------------------
-
+    # -------------------------------------------------------------------------
     def __init__(self, arguments):
         self.input = None
         self.output = None
