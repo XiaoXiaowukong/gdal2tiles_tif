@@ -525,23 +525,34 @@ class GDAL2Tiles(object):
                         wysize,
                         band_list=[1],
                     )
-                    if (self.dataType == "float64"):
-                        mydata = np.asarray(array("d", data))
-                        self.gdaldataType = gdal.GDT_Float64
-                    elif (self.dataType == "float32"):
+                    # if (self.dataType == "float64"):
+                    #     mydata = np.asarray(array("d", data))
+                    #     self.gdaldataType = gdal.GDT_Float64
+                    # elif (self.dataType == "float32"):
+                    #     mydata = np.asarray(array("f", data))
+                    #     # mydata = np.asarray(array("d", data))
+                    #     self.gdaldataType = gdal.GDT_Float32
+
+                    try:
                         mydata = np.asarray(array("f", data))
+                        newMydata = np.reshape(mydata, (wysize, wxsize))
                         self.gdaldataType = gdal.GDT_Float32
+                    except Exception, e:
+                        mydata = np.asarray(array("d", data))
+                        newMydata = np.reshape(mydata, (wysize, wxsize))
+                        self.gdaldataType = gdal.GDT_Float64
                     if (self.options.exportNodata):
                         self.fill_value = self.options.exportNodata
                     else:
+                        print self.in_nodata.__len__()
                         if (self.in_nodata.__len__() == 0):
                             self.fill_value = self.options.exportNodata
                             pass
                         else:
                             self.fill_value = self.in_nodata[0]
-                            mydata[mydata == self.in_nodata[0]] = self.fill_value
+                            # mydata[mydata == self.in_nodata[0]] = self.fill_value
                     print self.fill_value
-                    newMydata = np.reshape(mydata, (wysize, wxsize))
+
                     print np.nanmax(newMydata)
                     print np.min(newMydata)
                     driver = gdal.GetDriverByName("GTiff");  # 数据类型必须有，因为要计算需要多大内存空间
